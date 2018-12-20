@@ -41,64 +41,107 @@ struct PyZGrid {
         );
     }
 
-    void display_vtk( const char *vtk ) {
+    void display_vtk( const char *filename ) {
         VtkOutput<0,TF> vo;
         grid.display( vo );
-        vo.save( vtk );
+        vo.save( filename );
     }
 
     Grid grid;
 };
 
-py::array_t<PD_TYPE> get_measures( const py::array_t<PD_TYPE> &positions, const py::array_t<PD_TYPE> &weights ) {
-    std::cout << positions.shape( 0 ) << std::endl;
-    std::cout << positions.shape( 1 ) << std::endl;
+struct PyConvexPolyhedraAssembly {
+    using TB = PowerDiagram::Bounds::ConvexPolyhedronAssembly<PyPc>;
+    using TF = PD_TYPE; // boost::multiprecision::mpfr_float_100
+    using Pt = TB::Pt;
+
+    PyConvexPolyhedraAssembly() {
+    }
+
+    void add_box( py::array_t<PD_TYPE> &min_pos, py::array_t<PD_TYPE> &max_pos, PD_TYPE coeff, std::size_t cut_id ) {
+        auto buf_min_pos = min_pos.request(); auto ptr_min_pos = (PD_TYPE *)buf_min_pos.ptr;
+        auto buf_max_pos = max_pos.request(); auto ptr_max_pos = (PD_TYPE *)buf_max_pos.ptr;
+        if ( min_pos.size() != PyPc::dim )
+            throw pybind11::value_error( "wrong dimensions for min_pos" );
+        if ( max_pos.size() != PyPc::dim )
+            throw pybind11::value_error( "wrong dimensions for max_pos" );
+        bounds.add_box( ptr_min_pos, ptr_max_pos, coeff, cut_id );
+    }
+
+    void display_boundaries_vtk( const char *filename ) {
+        VtkOutput<1,TF> vo;
+        bounds.display_boundaries( vo );
+        vo.save( filename );
+    }
+
+    TB bounds;
+};
+
+py::array_t<PD_TYPE> get_measures( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid ) {
+    auto buf_positions = positions.request();
+    auto buf_weights = weights.request();
+
+    auto ptr_positions = reinterpret_cast<const PyZGrid::Pt *>( buf_positions.ptr );
+    auto ptr_weights = reinterpret_cast<const PyZGrid::TF *>( buf_weights.ptr );
 
     py::array_t<PD_TYPE> res;
-    res.resize( { 10ul, 3ul } );
-    //        //        auto buf_res = res.request();
-    //        //        auto ptr_res = (PD_TYPE *)buf_res.ptr;
-    //        //        for( size_t i = 0, o = 0; i < pb.size(); ++i ) {
-    //        //            ptr_res[ o++ ] = pb[ i ].x;
-    //        //            ptr_res[ o++ ] = pb[ i ].y;
-    //        //        }
+    res.resize( { positions.shape( 0 ) } );
+    auto buf_res = res.request();
+    auto ptr_res = (PD_TYPE *)buf_res.ptr;
+    for( std::ptrdiff_t i = 0; i < positions.shape( 0 ); ++i )
+        ptr_res[ i ] = 0;
+
+    py_grid.grid.for_each_laguerre_cell(
+        [&]( auto &lc, std::size_t num_dirac_0 ) {
+            domain.bounds.for_each_intersection( lc, [&]( auto &cp, auto space_func ) {
+                ptr_res[ num_dirac_0 ] += cp.measure();
+            } );
+        }, domain.bounds.englobing_convex_polyhedron(),
+        ptr_positions,
+        ptr_weights,
+        positions.shape( 0 )
+    );
+
     return res;
 }
 
-void display_vtk( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, const char *filename, py::object &py_grid ) {
-    PyZGrid g = py_grid.cast<PyZGrid>();
-        // VtkOutput<1> vtk_output( { "weight" } );
+void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid ) {
+    VtkOutput<1> vtk_output( { "weight" } );
 
-        // auto buf_positions = positions.request();
-        // auto buf_weights = weights.request();
+    auto buf_positions = positions.request();
+    auto buf_weights = weights.request();
 
-        // auto ptr_positions = reinterpret_cast<const PyZGrid::Pt *>( buf_positions.ptr );
-        // auto ptr_weights = reinterpret_cast<const PyZGrid::TF *>( buf_weights.ptr );
+    auto ptr_positions = reinterpret_cast<const PyZGrid::Pt *>( buf_positions.ptr );
+    auto ptr_weights = reinterpret_cast<const PyZGrid::TF *>( buf_weights.ptr );
 
-        // using Bounds = PowerDiagram::Bounds::ConvexPolyhedronAssembly<PyPc>;
-        // Bounds bounds;
-        // bounds.add_box( { 0, 0 }, { 1, 1 }, 1.0, -1 );
+    py_grid.grid.for_each_laguerre_cell(
+        [&]( auto &lc, std::size_t num_dirac_0 ) {
+            domain.bounds.for_each_intersection( lc, [&]( auto &cp, auto space_func ) {
+                cp.display( vtk_output, { ptr_weights[ num_dirac_0 ] } );
+            } );
+        }, domain.bounds.englobing_convex_polyhedron(),
+        ptr_positions,
+        ptr_weights,
+        positions.shape( 0 )
+    );
 
-        // py_grid.grid.for_each_laguerre_cell(
-        //     [&]( auto &lc, std::size_t num_dirac_0 ) {
-        //         lc.display( vtk_output, { ptr_weights[ num_dirac_0 ] } );
-        //     }, bounds.englobing_convex_polyhedron(),
-        //     ptr_positions,
-        //     ptr_weights,
-        //     positions.shape( 0 )
-        // );
-
-        // vtk_output.save( filename );
+    vtk_output.save( filename );
 }
 
 PYBIND11_MODULE( PD_MODULE_NAME, m ) {
     m.doc() = "Power diagram tools";
 
     py::class_<PyZGrid>( m, "ZGrid" )
-        .def( py::init<int>()                     , "" )
-        .def( "update", &PyZGrid::update          , "" )
-        .def( "display_vtk", &PyZGrid::display_vtk, "" )
+        .def( py::init<int>()                                                             , "" )
+        .def( "update"                , &PyZGrid::update                                  , "" )
+        .def( "display_vtk"           , &PyZGrid::display_vtk                             , "" )
     ;
+
+    py::class_<PyConvexPolyhedraAssembly>( m, "ConvexPolyhedraAssembly" )
+        .def( py::init<>()                                                                , "" )
+        .def( "add_box"               , &PyConvexPolyhedraAssembly::add_box               , "" )
+        .def( "display_boundaries_vtk", &PyConvexPolyhedraAssembly::display_boundaries_vtk, "" )
+    ;    
 
     m.def( "get_measures", &get_measures );
     m.def( "display_vtk" , &display_vtk );
