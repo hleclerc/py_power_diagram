@@ -1,0 +1,9 @@
+vtk/
+.vscode
+.py_power_diagram*
+.env
+hugo/
+ext/
+*.so
+__pycache__
+.rendered*
