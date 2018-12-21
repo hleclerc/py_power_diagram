@@ -4,12 +4,12 @@
 #include <pybind11/numpy.h>
 #include <memory>
 
-#include "../ext/power_diagram/src/PowerDiagram/Bounds/ConvexPolyhedronAssembly.h"
+#include "../../ext/power_diagram/src/PowerDiagram/Bounds/ConvexPolyhedronAssembly.h"
 
-#include "../ext/power_diagram/src/PowerDiagram/Visitors/ZGrid.h"
+#include "../../ext/power_diagram/src/PowerDiagram/Visitors/ZGrid.h"
 
-#include "../ext/power_diagram/src/PowerDiagram/get_integrations.h"
-#include "../ext/power_diagram/src/PowerDiagram/VtkOutput.h"
+#include "../../ext/power_diagram/src/PowerDiagram/get_integrations.h"
+#include "../../ext/power_diagram/src/PowerDiagram/VtkOutput.h"
 
 namespace py = pybind11;
 

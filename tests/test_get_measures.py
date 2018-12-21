@@ -1,4 +1,5 @@
-from _import_py_power_diagram import pd
+import py_power_diagram_test_context
+import py_power_diagram as pd
 import numpy as np
 
 # domain

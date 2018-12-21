@@ -1,7 +1,6 @@
-from .. import py_power_diagram_cpp_module
+from py_power_diagram.internals import py_power_diagram_cpp_module
 import numpy as np
 import os
-
 
 # grid based on morton ordering
 class ZGrid:

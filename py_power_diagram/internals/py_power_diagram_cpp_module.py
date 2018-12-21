@@ -12,7 +12,7 @@ def module_for_tad( type, dim ):
         if dim == 2 :
             name = "py_power_diagram_2d_double"
             if not ( name in imported_modules ):
-                imported_modules[ name ] = cppimport.imp( "py_power_diagram.py_power_diagram_2d_double" )
+                imported_modules[ name ] = cppimport.imp( "py_power_diagram.internals.py_power_diagram_2d_double" )
             return imported_modules[ name ]
         raise "TODO: bind 3D"
     raise "unmanaged type"
