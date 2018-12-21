@@ -5,7 +5,10 @@
 #include <memory>
 
 #include "../ext/power_diagram/src/PowerDiagram/Bounds/ConvexPolyhedronAssembly.h"
+
 #include "../ext/power_diagram/src/PowerDiagram/Visitors/ZGrid.h"
+
+#include "../ext/power_diagram/src/PowerDiagram/get_integrations.h"
 #include "../ext/power_diagram/src/PowerDiagram/VtkOutput.h"
 
 namespace py = pybind11;
@@ -23,7 +26,7 @@ struct PyZGrid {
     using Pt   = typename Grid::Pt;
     using TF   = typename Grid::TF;
 
-    PyZGrid( int max_dirac_per_cell ) /*: grid( max_dirac_per_cell ) */{
+    PyZGrid( int max_dirac_per_cell ) : grid( max_dirac_per_cell ) {
     }
 
     void update( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, bool positions_have_changed, bool weights_have_changed ) {
@@ -77,7 +80,7 @@ struct PyConvexPolyhedraAssembly {
     TB bounds;
 };
 
-py::array_t<PD_TYPE> get_measures( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid ) {
+py::array_t<PD_TYPE> integration( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
     auto buf_positions = positions.request();
     auto buf_weights = weights.request();
 
@@ -88,19 +91,15 @@ py::array_t<PD_TYPE> get_measures( py::array_t<PD_TYPE> &positions, py::array_t<
     res.resize( { positions.shape( 0 ) } );
     auto buf_res = res.request();
     auto ptr_res = (PD_TYPE *)buf_res.ptr;
-    for( std::ptrdiff_t i = 0; i < positions.shape( 0 ); ++i )
-        ptr_res[ i ] = 0;
 
-    py_grid.grid.for_each_laguerre_cell(
-        [&]( auto &lc, std::size_t num_dirac_0 ) {
-            domain.bounds.for_each_intersection( lc, [&]( auto &cp, auto space_func ) {
-                ptr_res[ num_dirac_0 ] += cp.measure();
-            } );
-        }, domain.bounds.englobing_convex_polyhedron(),
-        ptr_positions,
-        ptr_weights,
-        positions.shape( 0 )
-    );
+    if ( func == "1" || func == "unit" )
+        PowerDiagram::integration( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::Unit    () );
+    else if ( func == "exp(-r**2)" || func == "exp(-r^2)" )
+        PowerDiagram::integration( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::Gaussian() );
+    else if ( func == "r**2" || func == "r^2" )
+        PowerDiagram::integration( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::R2      () );
+    else
+        throw pybind11::value_error( "unknown function type" );
 
     return res;
 }
@@ -143,7 +142,7 @@ PYBIND11_MODULE( PD_MODULE_NAME, m ) {
         .def( "display_boundaries_vtk", &PyConvexPolyhedraAssembly::display_boundaries_vtk, "" )
     ;    
 
-    m.def( "get_measures", &get_measures );
-    m.def( "display_vtk" , &display_vtk );
+    m.def( "integration", &integration );
+    m.def( "display_vtk", &display_vtk );
 }
 
