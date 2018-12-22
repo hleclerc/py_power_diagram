@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 
-with open( 'requirements.txt' ) as f:
-    requirements = f.read().splitlines()
-    
+pd2 = Extension(
+    'py_power_diagram_2d_double',
+    sources = [ 'py_power_diagram/cpp/py_power_diagram_2d_double.cpp' ],
+    include_dirs = [ 'ext/xsimd/include', 'ext/pybind11/include' ],
+    define_macros = [ ( 'PD_DIM', '2' ), ( 'PD_TYPE', 'double' ), ( 'PD_MODULE_NAME', 'py_power_diagram_2d_double' ) ],
+    extra_compile_args = [ '-march=native' ], # , '-ffast-math'
+)
+
 setup(
     name = 'py_power_diagram',
     version = '0.1',
-    install_requires = requirements,
-    packages = [ 'py_power_diagram' ]
+    packages = find_packages( exclude = ( 'tests', 'docs' ) ),
+    ext_modules = [ pd2 ],
+    install_requires = [
+        "pybind11",
+        "numpy",
+    ],
 )

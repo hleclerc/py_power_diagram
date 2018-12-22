@@ -1,3 +1,2 @@
-cppimport
 pybind11
 numpy

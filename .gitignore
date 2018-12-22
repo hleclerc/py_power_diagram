@@ -3,7 +3,9 @@ vtk/
 .py_power_diagram*
 .env
 hugo/
-ext/
 *.so
 __pycache__
 .rendered*
+*.o
+dist/
+build/
