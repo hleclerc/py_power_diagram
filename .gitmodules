@@ -1,0 +1,6 @@
+[submodule "ext/xsimd"]
+	path = ext/xsimd
+	url = http://github.com/QuantStack/xsimd.git
+[submodule "ext/power_diagram"]
+	path = ext/power_diagram
+	url = http://github.com/hleclerc/power_diagram.git
