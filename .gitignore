@@ -9,3 +9,4 @@ __pycache__
 *.o
 dist/
 build/
+*.egg-info
