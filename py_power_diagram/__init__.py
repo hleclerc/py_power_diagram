@@ -1,3 +1,4 @@
+from .OptimalTransportSolver import OptimalTransportSolver
 from . import domain_types
 from . import grid_types
 from . import cpp
@@ -36,14 +37,6 @@ def get_integrals( func, positions, weights, domain = None, grid = None ):
     g = _grid_for( positions, weights, grid, m )
     return m.get_integrals( positions, weights, d, g, func.lower() )
 
-# return optimal weights
-# possible func types: "1", ...
-def optimal_transport_2( func, positions, weights, domain = None, grid = None ):
-    m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
-    d = _domain_for( positions, weights, domain, m )
-    g = _grid_for( positions, weights, grid, m )
-    return m.optimal_transport_2( positions, weights, d, g, func.lower() )
-
 # derivatives of integrals of $func wrt weights
 # possible func types: "1", ...
 def get_der_integrals_wrt_weights( func, positions, weights, domain = None, grid = None ):
@@ -51,4 +44,15 @@ def get_der_integrals_wrt_weights( func, positions, weights, domain = None, grid
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
     return m.get_der_integrals_wrt_weights( positions, weights, d, g, func.lower() )
+
+# return optimal weights
+# possible func types: "1", ...
+def optimal_transport_2( func, positions, weights, domain = None, grid = None ):
+    m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
+    d = _domain_for( positions, weights, domain, m )
+    g = _grid_for( positions, weights, grid, m )
+
+    s = OptimalTransportSolver( m, d, g, func.lower() )
+    return s.solve( positions, weights )
+
 

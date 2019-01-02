@@ -8,7 +8,7 @@
 
 #include "../../ext/power_diagram/src/PowerDiagram/Visitors/ZGrid.h"
 
-#include "../../ext/power_diagram/src/PowerDiagram/optimal_transport_2.h"
+#include "../../ext/power_diagram/src/PowerDiagram/get_der_integrals_wrt_weights.h"
 #include "../../ext/power_diagram/src/PowerDiagram/get_integrals.h"
 #include "../../ext/power_diagram/src/PowerDiagram/VtkOutput.h"
 
@@ -128,26 +128,50 @@ void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
     vtk_output.save( filename );
 }
 
-py::array_t<PD_TYPE> optimal_transport_2( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
+struct PyDerResult {
+    py::array_t<std::size_t> m_offsets;
+    py::array_t<std::size_t> m_columns;
+    py::array_t<PD_TYPE>     m_values;
+    py::array_t<PD_TYPE>     v_values;
+    int                      error;
+};
+
+template<class T>
+void vcp( py::array_t<T> &dst, const std::vector<T> &src ) {
+    dst.resize( { src.size() } );
+    auto buf = dst.request();
+    auto ptr = reinterpret_cast<T *>( buf.ptr );
+    for( std::size_t i = 0; i < src.size(); ++i )
+        ptr[ i ] = src[ i ];
+}
+
+//
+PyDerResult get_der_integrals_wrt_weights( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
     auto buf_positions = positions.request();
     auto buf_weights = weights.request();
 
     auto ptr_positions = reinterpret_cast<const PyZGrid::Pt *>( buf_positions.ptr );
     auto ptr_weights = reinterpret_cast<const PyZGrid::TF *>( buf_weights.ptr );
 
-    py::array_t<PD_TYPE> res;
-    res.resize( { positions.shape( 0 ) } );
-    auto buf_res = res.request();
-    auto ptr_res = (PD_TYPE *)buf_res.ptr;
+    std::vector<std::size_t> w_m_offsets;
+    std::vector<std::size_t> w_m_columns;
+    std::vector<PD_TYPE    > w_m_values;
+    std::vector<PD_TYPE    > w_v_values;
 
+    PyDerResult res;
     if ( func == "1" || func == "unit" )
-        PowerDiagram::optimal_transport_2( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::Unit    () );
+        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::Unit    () );
     else if ( func == "exp(-r**2)" || func == "exp(-r^2)" )
-        PowerDiagram::optimal_transport_2( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::Gaussian() );
+        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::Gaussian() );
     else if ( func == "r**2" || func == "r^2" )
-        PowerDiagram::optimal_transport_2( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::R2      () );
+        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::R2      () );
     else
         throw pybind11::value_error( "unknown function type" );
+
+    vcp( res.m_offsets, w_m_offsets );
+    vcp( res.m_columns, w_m_columns );
+    vcp( res.m_values , w_m_values  );
+    vcp( res.v_values , w_v_values  );
 
     return res;
 }
@@ -168,8 +192,16 @@ PYBIND11_MODULE( PD_MODULE_NAME, m ) {
         .def( "display_boundaries_vtk", &PyConvexPolyhedraAssembly::display_boundaries_vtk, "" )
     ;    
 
-    m.def( "display_vtk"        , &display_vtk         );
-    m.def( "get_integrals"      , &get_integrals       );
-    m.def( "optimal_transport_2", &optimal_transport_2 );
+    py::class_<PyDerResult>( m, "DerResult" )
+        .def_readwrite( "m_offsets", &PyDerResult::m_offsets, "" )
+        .def_readwrite( "m_columns", &PyDerResult::m_columns, "" )
+        .def_readwrite( "m_values" , &PyDerResult::m_values , "" )
+        .def_readwrite( "v_values" , &PyDerResult::v_values , "" )
+        .def_readwrite( "error"    , &PyDerResult::error    , "" )
+    ;    
+
+    m.def( "display_vtk"                  , &display_vtk                   );
+    m.def( "get_integrals"                , &get_integrals                 );
+    m.def( "get_der_integrals_wrt_weights", &get_der_integrals_wrt_weights );
 }
 

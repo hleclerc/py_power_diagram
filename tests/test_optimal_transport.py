@@ -4,11 +4,11 @@ import numpy as np
 import unittest
 
 class TestOptimalTransport( unittest.TestCase ):
-    def setUp( self, nb_diracs = 100 ):
+    def setUp( self ):
         self.domain = pd.domain_types.ConvexPolyhedraAssembly()
         self.domain.add_box( [ 0, 0 ], [ 1, 1 ] )
 
-    def test_ot( self, nb_diracs = 100 ):
+    def test_ot( self, nb_diracs = 100000 ):
         for i in range( 1 ):
             # diracs
             self.positions = np.random.rand( nb_diracs, 2 )
@@ -16,14 +16,14 @@ class TestOptimalTransport( unittest.TestCase ):
 
             # optimal weights
             new_weights = pd.optimal_transport_2( "1", self.positions, self.weights, self.domain )
-            print( new_weights )
 
             # integrals
-            areas = pd.get_integrals( "1", self.positions, self.weights, self.domain )
-            print( areas )
-            print( np.min( areas ) )
-            print( np.max( areas ) )
-            # self.assertAlmostEqual( np.sum( areas ), 1.0 )
+            areas = pd.get_integrals( "1", self.positions, new_weights, self.domain )
+            self.assertAlmostEqual( np.min( areas ), 1.0 / nb_diracs, places = 6 )
+            self.assertAlmostEqual( np.max( areas ), 1.0 / nb_diracs, places = 6 )
+
+            # pd.display_vtk( "vtk/pd.vtk", self.positions, self.weights, self.domain )
 
 if __name__ == '__main__':
+    np.random.seed( 1 )
     unittest.main()
