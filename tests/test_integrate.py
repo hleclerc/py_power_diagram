@@ -3,7 +3,7 @@ import py_power_diagram as pd
 import numpy as np
 import unittest
 
-class TestIntegral( unittest.TestCase ):
+class TestIntegrate( unittest.TestCase ):
     def setUp( self, nb_diracs = 100 ):
         self.domain = pd.domain_types.ConvexPolyhedraAssembly()
         self.domain.add_box( [ 0, 0 ], [ 1, 1 ] )
@@ -15,7 +15,7 @@ class TestIntegral( unittest.TestCase ):
             self.weights = np.ones( nb_diracs )
 
             # integrals
-            areas = pd.integrals( self.positions, self.weights, self.domain )
+            areas = pd.get_integrals( "1", self.positions, self.weights, self.domain )
             self.assertAlmostEqual( np.sum( areas ), 1.0 )
 
 if __name__ == '__main__':

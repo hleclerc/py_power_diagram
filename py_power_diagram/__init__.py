@@ -28,18 +28,27 @@ def display_vtk( filename, positions, weights, domain = None, grid = None ):
     g = _grid_for( positions, weights, grid, m )
     m.display_vtk( filename, positions, weights, d, g )
 
-# return integral( cell_i d... ) for each cell
-# possible measure types: "leb", ...
-def integrals( positions, weights, domain = None, grid = None, func = "1" ):
+# return integral( cell_i, func... ) for each cell
+# possible func types: "1", ...
+def get_integrals( func, positions, weights, domain = None, grid = None ):
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
-    return m.integrals( positions, weights, d, g, func.lower() )
+    return m.get_integrals( positions, weights, d, g, func.lower() )
 
-# wrt weights
-def der_integration_wrt_weights( positions, weights, domain = None, grid = None, func = "1" ):
+# return optimal weights
+# possible func types: "1", ...
+def optimal_transport_2( func, positions, weights, domain = None, grid = None ):
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
-    return m.get_der_integrations( positions, weights, d, g, func.lower() )
+    return m.optimal_transport_2( positions, weights, d, g, func.lower() )
+
+# derivatives of integrals of $func wrt weights
+# possible func types: "1", ...
+def get_der_integrals_wrt_weights( func, positions, weights, domain = None, grid = None ):
+    m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
+    d = _domain_for( positions, weights, domain, m )
+    g = _grid_for( positions, weights, grid, m )
+    return m.get_der_integrals_wrt_weights( positions, weights, d, g, func.lower() )
 

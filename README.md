@@ -6,3 +6,5 @@ For python, the bindings have first to be compiled. It can be done manually usin
 
 Note: `PowerDiagram.add_..._shape` adds a shape in the integration space (it's cumulative).
 
+Question pour Quentin:
+- optimal_transport_2 fait l'hypothèse que densité de probabilité. Est-ce que c'est bon ?

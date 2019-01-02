@@ -8,6 +8,7 @@
 
 #include "../../ext/power_diagram/src/PowerDiagram/Visitors/ZGrid.h"
 
+#include "../../ext/power_diagram/src/PowerDiagram/optimal_transport_2.h"
 #include "../../ext/power_diagram/src/PowerDiagram/get_integrals.h"
 #include "../../ext/power_diagram/src/PowerDiagram/VtkOutput.h"
 
@@ -80,7 +81,7 @@ struct PyConvexPolyhedraAssembly {
     TB bounds;
 };
 
-py::array_t<PD_TYPE> integrals( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
+py::array_t<PD_TYPE> get_integrals( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
     auto buf_positions = positions.request();
     auto buf_weights = weights.request();
 
@@ -127,6 +128,31 @@ void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
     vtk_output.save( filename );
 }
 
+py::array_t<PD_TYPE> optimal_transport_2( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
+    auto buf_positions = positions.request();
+    auto buf_weights = weights.request();
+
+    auto ptr_positions = reinterpret_cast<const PyZGrid::Pt *>( buf_positions.ptr );
+    auto ptr_weights = reinterpret_cast<const PyZGrid::TF *>( buf_weights.ptr );
+
+    py::array_t<PD_TYPE> res;
+    res.resize( { positions.shape( 0 ) } );
+    auto buf_res = res.request();
+    auto ptr_res = (PD_TYPE *)buf_res.ptr;
+
+    if ( func == "1" || func == "unit" )
+        PowerDiagram::optimal_transport_2( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::Unit    () );
+    else if ( func == "exp(-r**2)" || func == "exp(-r^2)" )
+        PowerDiagram::optimal_transport_2( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::Gaussian() );
+    else if ( func == "r**2" || func == "r^2" )
+        PowerDiagram::optimal_transport_2( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::R2      () );
+    else
+        throw pybind11::value_error( "unknown function type" );
+
+    return res;
+}
+
+
 PYBIND11_MODULE( PD_MODULE_NAME, m ) {
     m.doc() = "Power diagram tools";
 
@@ -142,7 +168,8 @@ PYBIND11_MODULE( PD_MODULE_NAME, m ) {
         .def( "display_boundaries_vtk", &PyConvexPolyhedraAssembly::display_boundaries_vtk, "" )
     ;    
 
-    m.def( "integrals"  , &integrals   );
-    m.def( "display_vtk", &display_vtk );
+    m.def( "display_vtk"        , &display_vtk         );
+    m.def( "get_integrals"      , &get_integrals       );
+    m.def( "optimal_transport_2", &optimal_transport_2 );
 }
 
