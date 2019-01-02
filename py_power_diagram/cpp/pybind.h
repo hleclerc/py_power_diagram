@@ -27,7 +27,7 @@ struct PyZGrid {
     using Pt   = typename Grid::Pt;
     using TF   = typename Grid::TF;
 
-    PyZGrid( int max_dirac_per_cell ) : grid( max_dirac_per_cell ) {
+    PyZGrid( int max_dirac_per_cell, PD_TYPE max_delta_weight_per_grid ) : grid( max_dirac_per_cell, max_delta_weight_per_grid ) {
     }
 
     void update( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, bool positions_have_changed, bool weights_have_changed ) {
@@ -181,7 +181,7 @@ PYBIND11_MODULE( PD_MODULE_NAME, m ) {
     m.doc() = "Power diagram tools";
 
     py::class_<PyZGrid>( m, "ZGrid" )
-        .def( py::init<int>()                                                             , "" )
+        .def( py::init<int,PD_TYPE>()                                                     , "" )
         .def( "update"                , &PyZGrid::update                                  , "" )
         .def( "display_vtk"           , &PyZGrid::display_vtk                             , "" )
     ;

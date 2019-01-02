@@ -5,7 +5,7 @@ from setuptools import setup, find_packages, Extension
 pd2 = Extension(
     'py_power_diagram_2d_double',
     sources = [ 'py_power_diagram/cpp/py_power_diagram_2d_double.cpp' ],
-    include_dirs = [ 'ext/xsimd/include', 'ext/pybind11/include' ],
+    include_dirs = [ 'ext/xsimd/include/', 'ext/pybind11/include' ],
     define_macros = [ ( 'PD_DIM', '2' ), ( 'PD_TYPE', 'double' ), ( 'PD_MODULE_NAME', 'py_power_diagram_2d_double' ) ],
     extra_compile_args = [ '-march=native', '-ffast-math' ],
 )

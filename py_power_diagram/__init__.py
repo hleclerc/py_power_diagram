@@ -10,7 +10,7 @@ def _grid_for( positions, weights, grid, m ):
         if grid._inst == None:
             grid.update( positions, weights )
         return grid._inst
-    res = grid_types.ZGrid( 10 )
+    res = grid_types.ZGrid( 13 )
     res.update( positions, weights )
     return res._inst
 
