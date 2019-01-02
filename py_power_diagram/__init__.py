@@ -30,11 +30,11 @@ def display_vtk( filename, positions, weights, domain = None, grid = None ):
 
 # return integral( cell_i d... ) for each cell
 # possible measure types: "leb", ...
-def integration( positions, weights, domain = None, grid = None, func = "1" ):
+def integrals( positions, weights, domain = None, grid = None, func = "1" ):
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
-    return m.integration( positions, weights, d, g, func.lower() )
+    return m.integrals( positions, weights, d, g, func.lower() )
 
 # wrt weights
 def der_integration_wrt_weights( positions, weights, domain = None, grid = None, func = "1" ):

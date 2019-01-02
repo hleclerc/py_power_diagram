@@ -8,7 +8,7 @@
 
 #include "../../ext/power_diagram/src/PowerDiagram/Visitors/ZGrid.h"
 
-#include "../../ext/power_diagram/src/PowerDiagram/get_integrations.h"
+#include "../../ext/power_diagram/src/PowerDiagram/get_integrals.h"
 #include "../../ext/power_diagram/src/PowerDiagram/VtkOutput.h"
 
 namespace py = pybind11;
@@ -80,7 +80,7 @@ struct PyConvexPolyhedraAssembly {
     TB bounds;
 };
 
-py::array_t<PD_TYPE> integration( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
+py::array_t<PD_TYPE> integrals( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
     auto buf_positions = positions.request();
     auto buf_weights = weights.request();
 
@@ -93,11 +93,11 @@ py::array_t<PD_TYPE> integration( py::array_t<PD_TYPE> &positions, py::array_t<P
     auto ptr_res = (PD_TYPE *)buf_res.ptr;
 
     if ( func == "1" || func == "unit" )
-        PowerDiagram::integration( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::Unit    () );
+        PowerDiagram::get_integrals( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::Unit    () );
     else if ( func == "exp(-r**2)" || func == "exp(-r^2)" )
-        PowerDiagram::integration( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::Gaussian() );
+        PowerDiagram::get_integrals( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::Gaussian() );
     else if ( func == "r**2" || func == "r^2" )
-        PowerDiagram::integration( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::R2      () );
+        PowerDiagram::get_integrals( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::R2      () );
     else
         throw pybind11::value_error( "unknown function type" );
 
@@ -142,7 +142,7 @@ PYBIND11_MODULE( PD_MODULE_NAME, m ) {
         .def( "display_boundaries_vtk", &PyConvexPolyhedraAssembly::display_boundaries_vtk, "" )
     ;    
 
-    m.def( "integration", &integration );
+    m.def( "integrals"  , &integrals   );
     m.def( "display_vtk", &display_vtk );
 }
 
