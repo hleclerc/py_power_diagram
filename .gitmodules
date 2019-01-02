@@ -4,6 +4,3 @@
 [submodule "ext/power_diagram"]
 	path = ext/power_diagram
 	url = http://github.com/hleclerc/power_diagram.git
-[submodule "ext/amgcl"]
-	path = ext/amgcl
-	url = https://github.com/ddemidov/amgcl.git
