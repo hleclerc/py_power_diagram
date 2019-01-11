@@ -46,7 +46,7 @@ struct PyZGrid {
     }
 
     void display_vtk( const char *filename ) {
-        VtkOutput<0,TF> vo;
+        VtkOutput<1,TF> vo({ "num" });
         grid.display( vo );
         vo.save( filename );
     }

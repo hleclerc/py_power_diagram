@@ -13,9 +13,8 @@ cfg['dependencies'] = ['pybind.h']
 #define PD_DIM         2
 
 
+#include "../../ext/power_diagram/src/PowerDiagram/Visitors/internal/ZCoords.cpp"
 #include "../../ext/power_diagram/src/PowerDiagram/system/ThreadPool.cpp"
 #include "../../ext/power_diagram/src/PowerDiagram/system/Assert.cpp"
-
-#include "../../ext/power_diagram/src/PowerDiagram/Visitors/ZGrid.cpp"
 
 #include "pybind.h"
