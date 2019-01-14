@@ -2,6 +2,14 @@ from petsc4py import PETSc
 import numpy as np
 import time
 
+class TimeMeasurement:
+    def __init__( self, table ):
+        self.table = table
+    def __enter__( self ):
+        self.t = time.perf_counter()
+    def __exit__( self, type, value, tb ):
+        self.table.append( time.perf_counter() - self.t )
+
 #
 class OptimalTransportSolver:
     def __init__( self, module, domain, grid, func ):
@@ -22,26 +30,21 @@ class OptimalTransportSolver:
         new_weights = weights + 0.0
         old_weights = weights + 0.0
         for num_iter in range( 100 ):
-            self.delta_w.append( np.max( new_weights ) - np.min( new_weights ) )
+            #   self.delta_w.append( np.max( new_weights ) - np.min( new_weights ) )
 
             # grid update
-            t0 = time.perf_counter()
-            self.grid.update( positions, new_weights, num_iter == 0, True )
-
-            t1 = time.perf_counter()
-            self.time_grid.append( t1 - t0 )
+            with TimeMeasurement( self.time_grid ):
+                self.grid.update( positions, new_weights, num_iter == 0, True )
 
             # derivatives
-            mvs = self.module.get_der_integrals_wrt_weights( positions, new_weights, self.domain, self.grid, self.func )
-
-            t2 = time.perf_counter()
-            self.time_der.append( t2 - t1 )
+            with TimeMeasurement( self.time_der ):
+                mvs = self.module.get_der_integrals_wrt_weights( positions, new_weights, self.domain, self.grid, self.func )
 
             # 
             if mvs.error:
                 ratio = 0.1
                 new_weights = ( 1 - ratio ) * old_weights + ratio * new_weights
-                print( "bim" )
+                print( "bim (going back)" )
                 continue
             old_weights = new_weights + 0.0
 
@@ -49,42 +52,36 @@ class OptimalTransportSolver:
             if self.func == '1':
                 mvs.m_values[ 0 ] *= 2
 
-            A = PETSc.Mat().createAIJ( [ weights.shape[ 0 ], weights.shape[ 0 ] ], csr = ( mvs.m_offsets.astype( PETSc.IntType ), mvs.m_columns.astype( PETSc.IntType ), mvs.m_values ) )
-            b = PETSc.Vec().createWithArray( mvs.v_values ) 
-            A.assemblyBegin() # Make matrices useable.
-            A.assemblyEnd()
-            
-            # Initialize ksp solver.
-            ksp = PETSc.KSP().create()
-            ksp.setType( 'cg' )
-            # ksp.getPC().setType( 'icc' )
-            ksp.getPC().setType( 'gamg' )
-            # print( 'Solving with:', ksp.getType() )
+            with TimeMeasurement( self.time_solve ):
+                A = PETSc.Mat().createAIJ( [ weights.shape[ 0 ], weights.shape[ 0 ] ], csr = ( mvs.m_offsets.astype( PETSc.IntType ), mvs.m_columns.astype( PETSc.IntType ), mvs.m_values ) )
+                b = PETSc.Vec().createWithArray( mvs.v_values ) 
+                A.assemblyBegin() # Make matrices useable.
+                A.assemblyEnd()
+                
+                # Initialize ksp solver.
+                ksp = PETSc.KSP().create()
+                ksp.setType( 'cg' )
+                # ksp.getPC().setType( 'icc' )
+                ksp.getPC().setType( 'gamg' )
+                # print( 'Solving with:', ksp.getType() )
 
-            ksp.setOperators( A )
-            ksp.setFromOptions()
-            
-            # Solve
-            ksp.solve( b, x )
-
-            t3 = time.perf_counter()
-            self.time_solve.append( t3 - t2 )
+                ksp.setOperators( A )
+                ksp.setFromOptions()
+                
+                # Solve
+                ksp.solve( b, x )
 
             nx = np.max( np.abs( x ) )
             new_weights -= x
-            print( nx )
+            print( "max dw:", nx )
 
             if nx < self.obj_max_dw:
                 break
 
-        print( 'solve:', self.time_solve )
-        print( 'grid :', self.time_grid  )
-        print( 'der  :', self.time_der   )
-        print( 'dw   :', self.delta_w    )
+        print( 'time solve:', self.time_solve )
+        print( 'time grid :', self.time_grid  )
+        print( 'time der  :', self.time_der   )
 
-        print( 'solve:', np.sum( self.time_solve ) )
-        print( 'grid :', np.sum( self.time_grid  ) )
-        print( 'der  :', np.sum( self.time_der   ) )
         return new_weights
 
 

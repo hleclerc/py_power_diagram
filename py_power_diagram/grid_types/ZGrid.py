@@ -4,7 +4,7 @@ import os
 
 # grid based on morton ordering
 class ZGrid:
-    def __init__( self, max_nb_diracs_per_cell = 10, max_delta_weight_per_grid = 1e-3 ):
+    def __init__( self, max_nb_diracs_per_cell = 10, max_delta_weight_per_grid = 1e40 ):
         self.max_delta_weight_per_grid = max_delta_weight_per_grid
         self.max_nb_diracs_per_cell = max_nb_diracs_per_cell
         self._inst = None

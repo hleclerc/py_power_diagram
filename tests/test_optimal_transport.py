@@ -9,7 +9,7 @@ class TestOptimalTransport( unittest.TestCase ):
         self.domain.add_box( [ 0, 0 ], [ 1, 1 ] )
 
     def test_ot( self, nb_diracs = 100000 ):
-        for i in range( 1 ):
+        for _ in range( 1 ):
             # diracs
             self.positions = np.random.rand( nb_diracs, 2 )
             self.weights = np.ones( nb_diracs )
