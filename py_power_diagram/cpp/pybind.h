@@ -14,6 +14,32 @@
 
 namespace py = pybind11;
 
+template<class FU>
+void find_radial_func( const std::string &func, const FU &fu ) {
+    if ( func == "1" || func == "unit" ) {
+        fu( FunctionEnum::Unit() );
+        return;
+    }
+
+    if ( func == "exp(-r**2)" || func == "exp(-r^2)" ) {
+        fu( FunctionEnum::Gaussian() );
+        return;
+    }
+
+    if ( func == "r**2" || func == "r^2" ) {
+        fu( FunctionEnum::R2() );
+        return;
+    }
+
+    if ( func == "in_ball(weight**0.5)" ) {
+        fu( FunctionEnum::InBallW05() );
+        return;
+    }
+
+    throw pybind11::value_error( "unknown function type" );
+
+}
+
 struct PyPc {
     static constexpr int nb_bits_per_axis = 31;
     static constexpr int allow_ball_cut   = 0;
@@ -30,7 +56,7 @@ struct PyZGrid {
     PyZGrid( int max_dirac_per_cell, PD_TYPE max_delta_weight_per_grid ) : grid( max_dirac_per_cell, max_delta_weight_per_grid ) {
     }
 
-    void update( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, bool positions_have_changed, bool weights_have_changed ) {
+    void update( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, bool positions_have_changed, bool weights_have_changed, std::string radial_func ) {
         auto buf_positions = positions.request();
         auto buf_weights = weights.request();
         if ( buf_positions.shape[ 1 ] != PyPc::dim )
@@ -41,7 +67,8 @@ struct PyZGrid {
             reinterpret_cast<const TF *>( buf_weights.ptr ),
             positions.shape( 0 ),
             positions_have_changed,
-            weights_have_changed
+            weights_have_changed,
+            radial_func == "in_ball(weight**0.5)"
         );
     }
 
@@ -112,19 +139,14 @@ py::array_t<PD_TYPE> get_integrals( py::array_t<PD_TYPE> &positions, py::array_t
     auto buf_res = res.request();
     auto ptr_res = (PD_TYPE *)buf_res.ptr;
 
-    if ( func == "1" || func == "unit" )
-        PowerDiagram::get_integrals( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::Unit    () );
-    else if ( func == "exp(-r**2)" || func == "exp(-r^2)" )
-        PowerDiagram::get_integrals( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::Gaussian() );
-    else if ( func == "r**2" || func == "r^2" )
-        PowerDiagram::get_integrals( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), FunctionEnum::R2      () );
-    else
-        throw pybind11::value_error( "unknown function type" );
+    find_radial_func( func, [&]( auto ft ) {
+        PowerDiagram::get_integrals( ptr_res, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), ft );
+    } );
 
     return res;
 }
 
-void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid ) {
+void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &radial_func ) {
     VtkOutput<1> vtk_output( { "weight" } );
 
     auto buf_positions = positions.request();
@@ -133,16 +155,18 @@ void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
     auto ptr_positions = reinterpret_cast<const PyZGrid::Pt *>( buf_positions.ptr );
     auto ptr_weights = reinterpret_cast<const PyZGrid::TF *>( buf_weights.ptr );
 
-    py_grid.grid.for_each_laguerre_cell(
-        [&]( auto &lc, std::size_t num_dirac_0 ) {
-            domain.bounds.for_each_intersection( lc, [&]( auto &cp, auto space_func ) {
-                cp.display( vtk_output, { ptr_weights[ num_dirac_0 ] } );
-            } );
-        }, domain.bounds.englobing_convex_polyhedron(),
-        ptr_positions,
-        ptr_weights,
-        positions.shape( 0 )
-    );
+    find_radial_func( radial_func, [&]( auto ft ) {
+        py_grid.grid.for_each_laguerre_cell(
+            [&]( auto &lc, std::size_t num_dirac_0 ) {
+                domain.bounds.for_each_intersection( lc, [&]( auto &cp, auto space_func ) {
+                    cp.display( vtk_output, { ptr_weights[ num_dirac_0 ] } );
+                } );
+            }, domain.bounds.englobing_convex_polyhedron(),
+            ptr_positions,
+            ptr_weights,
+            positions.shape( 0 )
+        );
+    } );
 
     vtk_output.save( filename );
 }
@@ -178,14 +202,9 @@ PyDerResult get_der_integrals_wrt_weights( py::array_t<PD_TYPE> &positions, py::
     std::vector<PD_TYPE    > w_v_values;
 
     PyDerResult res;
-    if ( func == "1" || func == "unit" )
-        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::Unit    () );
-    else if ( func == "exp(-r**2)" || func == "exp(-r^2)" )
-        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::Gaussian() );
-    else if ( func == "r**2" || func == "r^2" )
-        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::R2      () );
-    else
-        throw pybind11::value_error( "unknown function type" );
+    find_radial_func( func, [&]( auto ft ) {
+        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::InBallW05() );
+    } );
 
     vcp( res.m_offsets, w_m_offsets );
     vcp( res.m_columns, w_m_columns );

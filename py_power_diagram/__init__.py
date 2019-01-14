@@ -9,10 +9,10 @@ def _grid_for( positions, weights, grid, m ):
     if grid != None:
         if grid._inst == None:
             grid.update( positions, weights )
-        return grid._inst
+        return grid
     res = grid_types.ZGrid( 13 )
     res.update( positions, weights )
-    return res._inst
+    return res
 
 def _domain_for( positions, weights, domain, m ):
     if domain != None:
@@ -22,12 +22,12 @@ def _domain_for( positions, weights, domain, m ):
     return res._inst
 
 # make a vtk file for a representation of the power diagram
-def display_vtk( filename, positions, weights, domain = None, grid = None ):
+def display_vtk( filename, func, positions, weights, domain = None, grid = None ):
     os.makedirs( os.path.dirname( filename ), exist_ok = True )
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
-    m.display_vtk( filename, positions, weights, d, g )
+    m.display_vtk( filename, positions, weights, d, g._inst, func.lower() )
 
 # return integral( cell_i, func... ) for each cell
 # possible func types: "1", ...
@@ -35,7 +35,7 @@ def get_integrals( func, positions, weights, domain = None, grid = None ):
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
-    return m.get_integrals( positions, weights, d, g, func.lower() )
+    return m.get_integrals( positions, weights, d, g._inst, func.lower() )
 
 # derivatives of integrals of $func wrt weights
 # possible func types: "1", ...
@@ -43,7 +43,7 @@ def get_der_integrals_wrt_weights( func, positions, weights, domain = None, grid
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
-    return m.get_der_integrals_wrt_weights( positions, weights, d, g, func.lower() )
+    return m.get_der_integrals_wrt_weights( positions, weights, d, g._inst, func.lower() )
 
 # return optimal weights
 # possible func types: "1", ...

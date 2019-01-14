@@ -9,9 +9,10 @@ class ZGrid:
         self.max_nb_diracs_per_cell = max_nb_diracs_per_cell
         self._inst = None
 
-    def update( self, positions, weights, positions_have_changed = True, weights_have_changed = True ):
+    # specifying radial_func is useful when it can change the geometry (e.g. when intersecting with balls, ...).
+    def update( self, positions, weights, positions_have_changed = True, weights_have_changed = True, radial_func = "1" ):
         self. _check_inst( positions, weights )
-        self._inst.update( positions, weights, positions_have_changed, weights_have_changed )
+        self._inst.update( positions, weights, positions_have_changed, weights_have_changed, radial_func )
 
     def display_vtk( self, filename ):
         if self._inst != None:

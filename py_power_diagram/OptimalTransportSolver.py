@@ -12,12 +12,13 @@ class TimeMeasurement:
 
 #
 class OptimalTransportSolver:
-    def __init__( self, module, domain, grid, func ):
-        self.obj_max_dw = 1e-7
-        self.module     = module
-        self.domain     = domain
-        self.grid       = grid
-        self.func       = func
+    # 
+    def __init__( self, module, domain, grid, radial_func ):
+        self.radial_func = radial_func
+        self.obj_max_dw  = 1e-7
+        self.module      = module
+        self.domain      = domain
+        self.grid        = grid
 
         self.time_solve = []
         self.time_grid  = []
@@ -30,15 +31,13 @@ class OptimalTransportSolver:
         new_weights = weights + 0.0
         old_weights = weights + 0.0
         for num_iter in range( 100 ):
-            #   self.delta_w.append( np.max( new_weights ) - np.min( new_weights ) )
-
             # grid update
             with TimeMeasurement( self.time_grid ):
-                self.grid.update( positions, new_weights, num_iter == 0, True )
+                self.grid.update( positions, new_weights, positions_have_changed = num_iter == 0, weights_have_changed = True, radial_func = self.radial_func )
 
             # derivatives
             with TimeMeasurement( self.time_der ):
-                mvs = self.module.get_der_integrals_wrt_weights( positions, new_weights, self.domain, self.grid, self.func )
+                mvs = self.module.get_der_integrals_wrt_weights( positions, new_weights, self.domain, self.grid._inst, self.radial_func )
 
             # 
             if mvs.error:
@@ -49,7 +48,7 @@ class OptimalTransportSolver:
             old_weights = new_weights + 0.0
 
             #
-            if self.func == '1':
+            if self.radial_func == '1':
                 mvs.m_values[ 0 ] *= 2
 
             with TimeMeasurement( self.time_solve ):
