@@ -1,7 +1,7 @@
 /*cppimport
 <%
 setup_pybind11(cfg)
-cfg['include_dirs'] = ['../../ext/xsimd/include','../../ext/pybind11/include']
+cfg['include_dirs'] = ['../../ext/pybind11/include']
 cfg['compiler_args'] = ['-std=c++14','-march=native']
 
 cfg['dependencies'] = ['pybind.h']
