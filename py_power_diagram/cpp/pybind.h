@@ -72,10 +72,29 @@ struct PyConvexPolyhedraAssembly {
         bounds.add_box( ptr_min_pos, ptr_max_pos, coeff, cut_id );
     }
 
+    void add_convex_polyhedron( py::array_t<PD_TYPE> &positions_and_normals, PD_TYPE coeff, std::size_t cut_id ) {
+        auto buf_pan = positions_and_normals.request(); auto ptr_pan = (PD_TYPE *)buf_pan.ptr;
+        if ( positions_and_normals.shape( 1 ) != 2 * PyPc::dim )
+            throw pybind11::value_error( "wrong dimensions for positions_and_normals" );
+        std::vector<Pt> positions, normals;
+        for( pybind11::ssize_t i = 0; i < positions_and_normals.shape( 0 ); ++i ) {
+            positions.push_back( ptr_pan + PyPc::dim * ( 2 * i + 0 ) );
+            normals  .push_back( ptr_pan + PyPc::dim * ( 2 * i + 1 ) );
+        }
+        bounds.add_convex_polyhedron( positions, normals, coeff, cut_id );
+    }
+
     void display_boundaries_vtk( const char *filename ) {
         VtkOutput<1,TF> vo;
         bounds.display_boundaries( vo );
         vo.save( filename );
+    }
+
+    PD_TYPE coeff_at( py::array_t<PD_TYPE> &point ) {
+        auto buf_point = point.request(); auto ptr_buf_point = (PD_TYPE *)buf_point.ptr;
+        if ( point.size() != PyPc::dim )
+            throw pybind11::value_error( "wrong dimensions for point" );
+        return bounds.coeff_at( ptr_buf_point );
     }
 
     TB bounds;
@@ -188,8 +207,10 @@ PYBIND11_MODULE( PD_MODULE_NAME, m ) {
 
     py::class_<PyConvexPolyhedraAssembly>( m, "ConvexPolyhedraAssembly" )
         .def( py::init<>()                                                                , "" )
+        .def( "add_convex_polyhedron" , &PyConvexPolyhedraAssembly::add_convex_polyhedron , "" )
         .def( "add_box"               , &PyConvexPolyhedraAssembly::add_box               , "" )
         .def( "display_boundaries_vtk", &PyConvexPolyhedraAssembly::display_boundaries_vtk, "" )
+        .def( "coeff_at"              , &PyConvexPolyhedraAssembly::coeff_at              , "" )
     ;    
 
     py::class_<PyDerResult>( m, "DerResult" )
