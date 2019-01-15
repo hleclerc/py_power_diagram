@@ -37,6 +37,14 @@ def get_integrals( func, positions, weights, domain = None, grid = None ):
     g = _grid_for( positions, weights, grid, m )
     return m.get_integrals( positions, weights, d, g._inst, func.lower() )
 
+# return centroid( cell_i, func... ) for each cell
+# possible func types: "1", ...
+def get_centroids( func, positions, weights, domain = None, grid = None ):
+    m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
+    d = _domain_for( positions, weights, domain, m )
+    g = _grid_for( positions, weights, grid, m )
+    return m.get_centroids( positions, weights, d, g._inst, func.lower() )
+
 # derivatives of integrals of $func wrt weights
 # possible func types: "1", ...
 def get_der_integrals_wrt_weights( func, positions, weights, domain = None, grid = None ):

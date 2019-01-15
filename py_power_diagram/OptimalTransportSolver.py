@@ -56,7 +56,8 @@ class OptimalTransportSolver:
                 b = PETSc.Vec().createWithArray( mvs.v_values ) 
                 A.assemblyBegin() # Make matrices useable.
                 A.assemblyEnd()
-                
+
+
                 # Initialize ksp solver.
                 ksp = PETSc.KSP().create()
                 ksp.setType( 'cg' )

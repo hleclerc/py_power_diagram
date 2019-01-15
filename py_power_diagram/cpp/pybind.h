@@ -10,6 +10,7 @@
 
 #include "../../ext/power_diagram/src/PowerDiagram/get_der_integrals_wrt_weights.h"
 #include "../../ext/power_diagram/src/PowerDiagram/get_integrals.h"
+#include "../../ext/power_diagram/src/PowerDiagram/get_centroids.h"
 #include "../../ext/power_diagram/src/PowerDiagram/VtkOutput.h"
 
 namespace py = pybind11;
@@ -42,7 +43,7 @@ void find_radial_func( const std::string &func, const FU &fu ) {
 
 struct PyPc {
     static constexpr int nb_bits_per_axis = 31;
-    static constexpr int allow_ball_cut   = 0;
+    static constexpr int allow_ball_cut   = 1;
     static constexpr int dim              = PD_DIM;
     using                TI               = std::size_t;
     using                TF               = PD_TYPE; // boost::multiprecision::mpfr_float_100
@@ -146,8 +147,30 @@ py::array_t<PD_TYPE> get_integrals( py::array_t<PD_TYPE> &positions, py::array_t
     return res;
 }
 
+py::array_t<PD_TYPE> get_centroids( py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &func ) {
+    auto buf_positions = positions.request();
+    auto buf_weights = weights.request();
+
+    auto ptr_positions = reinterpret_cast<const PyZGrid::Pt *>( buf_positions.ptr );
+    auto ptr_weights = reinterpret_cast<const PyZGrid::TF *>( buf_weights.ptr );
+
+    py::array_t<PD_TYPE> res;
+    res.resize( { positions.shape( 0 ), (py::ssize_t)PyPc::dim } );
+    auto buf_res = res.request();
+    auto ptr_res = (PD_TYPE *)buf_res.ptr;
+
+    find_radial_func( func, [&]( auto ft ) {
+        PowerDiagram::get_centroids( py_grid.grid, domain.bounds, ptr_positions, ptr_weights, positions.shape( 0 ), ft, [&]( auto centroid, auto, auto num ) {
+            for( int d = 0; d < PyPc::dim; ++d )
+                ptr_res[ PyPc::dim * num + d ] = centroid[ d ];
+        } );
+    } );
+
+    return res;
+}
+
 void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &radial_func ) {
-    VtkOutput<1> vtk_output( { "weight" } );
+    VtkOutput<2> vtk_output( { "weight", "num" } );
 
     auto buf_positions = positions.request();
     auto buf_weights = weights.request();
@@ -159,7 +182,7 @@ void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
         py_grid.grid.for_each_laguerre_cell(
             [&]( auto &lc, std::size_t num_dirac_0, int ) {
                 domain.bounds.for_each_intersection( lc, [&]( auto &cp, auto space_func ) {
-                    cp.display( vtk_output, { ptr_weights[ num_dirac_0 ] } );
+                    cp.display( vtk_output, { ptr_weights[ num_dirac_0 ], PyPc::TF( num_dirac_0 ) } );
                 } );
             }, domain.bounds.englobing_convex_polyhedron(),
             ptr_positions,
@@ -243,6 +266,7 @@ PYBIND11_MODULE( PD_MODULE_NAME, m ) {
     ;    
 
     m.def( "display_vtk"                  , &display_vtk                   );
+    m.def( "get_centroids"                , &get_centroids                 );
     m.def( "get_integrals"                , &get_integrals                 );
     m.def( "get_der_integrals_wrt_weights", &get_der_integrals_wrt_weights );
 }
