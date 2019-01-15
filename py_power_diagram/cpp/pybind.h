@@ -38,7 +38,6 @@ void find_radial_func( const std::string &func, const FU &fu ) {
     }
 
     throw pybind11::value_error( "unknown function type" );
-
 }
 
 struct PyPc {
@@ -228,7 +227,7 @@ PyDerResult get_der_integrals_wrt_weights( py::array_t<PD_TYPE> &positions, py::
 
     PyDerResult res;
     find_radial_func( func, [&]( auto ft ) {
-        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), FunctionEnum::InBallW05() );
+        res.error = PowerDiagram::get_der_integrals_wrt_weights( w_m_offsets, w_m_columns, w_m_values, w_v_values, py_grid.grid, domain.bounds, ptr_positions, ptr_weights, std::size_t( positions.shape( 0 ) ), ft );
     } );
 
     vcp( res.m_offsets, w_m_offsets );
