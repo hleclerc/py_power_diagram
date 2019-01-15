@@ -157,14 +157,16 @@ void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
 
     find_radial_func( radial_func, [&]( auto ft ) {
         py_grid.grid.for_each_laguerre_cell(
-            [&]( auto &lc, std::size_t num_dirac_0 ) {
+            [&]( auto &lc, std::size_t num_dirac_0, int ) {
                 domain.bounds.for_each_intersection( lc, [&]( auto &cp, auto space_func ) {
                     cp.display( vtk_output, { ptr_weights[ num_dirac_0 ] } );
                 } );
             }, domain.bounds.englobing_convex_polyhedron(),
             ptr_positions,
             ptr_weights,
-            positions.shape( 0 )
+            positions.shape( 0 ),
+            false,
+            need_ball_cut( ft )
         );
     } );
 
