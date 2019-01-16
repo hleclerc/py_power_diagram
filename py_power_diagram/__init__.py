@@ -29,6 +29,22 @@ def display_vtk( filename, func, positions, weights, domain = None, grid = None 
     g = _grid_for( positions, weights, grid, m )
     m.display_vtk( filename, positions, weights, d, g._inst, func.lower() )
 
+# make a metapost file for a representation of the power diagram
+def display_asy( filename, func, positions, weights, domain = None, grid = None, preamble = "", output_format = "pdf", linewidth = 0.02, dotwidth = 0.0, values = np.array([]), colormap = "inferno" ):
+    os.makedirs( os.path.dirname( filename ), exist_ok = True )
+    m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
+    d = _domain_for( positions, weights, domain, m )
+    g = _grid_for( positions, weights, grid, m )
+
+    p = "settings.outformat = \"{}\";\nunitsize(1cm);\n".format( output_format )
+    if linewidth > 0:
+        p += "defaultpen({}cm);\n".format( linewidth )
+    elif dotwidth > 0:
+        p += "defaultpen({}cm);\n".format( dotwidth / 6 )
+    p += preamble
+
+    m.display_asy( filename, positions, weights, d, g._inst, func.lower(), p, values, colormap, linewidth, dotwidth )
+
 # return integral( cell_i, func... ) for each cell
 # possible func types: "1", ...
 def get_integrals( func, positions, weights, domain = None, grid = None ):

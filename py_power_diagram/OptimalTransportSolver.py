@@ -78,9 +78,9 @@ class OptimalTransportSolver:
             if nx < self.obj_max_dw:
                 break
 
-        print( 'time solve:', self.time_solve )
-        print( 'time grid :', self.time_grid  )
-        print( 'time der  :', self.time_der   )
+        # print( 'time solve:', self.time_solve )
+        # print( 'time grid :', self.time_grid  )
+        # print( 'time der  :', self.time_der   )
 
         return new_weights
 

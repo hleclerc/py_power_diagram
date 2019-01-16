@@ -9,14 +9,27 @@ class TestIntegrate( unittest.TestCase ):
         self.domain.add_box( [ 0, 0 ], [ 1, 1 ] )
 
     def test_area( self, nb_diracs = 100 ):        
-        for i in range( 10 ):
+        for _ in range( 10 ):
             # diracs
-            self.positions = np.random.rand( nb_diracs, 2 )
-            self.weights = np.ones( nb_diracs )
+            positions = np.random.rand( nb_diracs, 2 )
+            weights = np.ones( nb_diracs )
 
             # integrals
-            areas = pd.get_integrals( "1", self.positions, self.weights, self.domain )
+            areas = pd.get_integrals( "1", positions, weights, self.domain )
             self.assertAlmostEqual( np.sum( areas ), 1.0 )
+
+    def test_gaussian( self ):
+        positions = np.array( [[ 0.5, 0.5 ]] )
+
+        # wolfram: N[ Integrate[ Integrate[ Exp[  ( 0 - x*x - y*y ) / 1 ], { x, -0.5, 0.5 } ], { y, -0.5, 0.5 } ] ]
+        res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.zeros( 1 ), self.domain )
+        self.assertAlmostEqual( res[ 0 ], 0.851121, 5 )
+
+        # wolfram: N[ Integrate[ Integrate[ Exp[  ( 1 - x*x - y*y ) / 1 ], { x, -0.5, 0.5 } ], { y, -0.5, 0.5 } ] ]
+        res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.ones( 1 ), self.domain )
+        # self.assertAlmostEqual( res[ 0 ], 2.31359, 5 )
+        
+        print( "integration:", res )
 
 if __name__ == '__main__':
     unittest.main()
