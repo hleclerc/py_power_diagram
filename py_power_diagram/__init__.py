@@ -30,7 +30,7 @@ def display_vtk( filename, func, positions, weights, domain = None, grid = None 
     m.display_vtk( filename, positions, weights, d, g._inst, func.lower() )
 
 # make a metapost file for a representation of the power diagram
-def display_asy( filename, func, positions, weights, domain = None, grid = None, preamble = "", output_format = "pdf", linewidth = 0.02, dotwidth = 0.0, values = np.array([]), colormap = "inferno" ):
+def display_asy( filename, func, positions, weights, domain = None, grid = None, preamble = "", closing = "", output_format = "pdf", linewidth = 0.02, dotwidth = 0.0, values = np.array([]), colormap = "inferno", avoid_bounds = False ):
     os.makedirs( os.path.dirname( filename ), exist_ok = True )
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
@@ -43,7 +43,7 @@ def display_asy( filename, func, positions, weights, domain = None, grid = None,
         p += "defaultpen({}cm);\n".format( dotwidth / 6 )
     p += preamble
 
-    m.display_asy( filename, positions, weights, d, g._inst, func.lower(), p, values, colormap, linewidth, dotwidth )
+    m.display_asy( filename, positions, weights, d, g._inst, func.lower(), p, values, colormap, linewidth, dotwidth, avoid_bounds, closing )
 
 # return integral( cell_i, func... ) for each cell
 # possible func types: "1", ...

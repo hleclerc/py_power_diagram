@@ -38,6 +38,7 @@ class TestIntegrate( unittest.TestCase ):
 
         # wolfram: N[ Integrate[ Integrate[ Exp[  ( 0 - x*x - y*y ) / 1 ], { x, 0, 1 } ], { y, 0, 1 } ] ]
         res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.zeros( 1 ), self.domain )
+        self.assertAlmostEqual( res[ 0 ], 0.557746, 5 )
 
         print( "integration:", res )
 

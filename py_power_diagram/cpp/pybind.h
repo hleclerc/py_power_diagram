@@ -492,7 +492,7 @@ void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
     vtk_output.save( filename );
 }
 
-void display_asy( const char *filename, py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &radial_func, const char *preamble, py::array_t<PD_TYPE> &values, std::string colormap, double linewidth, double dotwidth ) {
+void display_asy( const char *filename, py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &radial_func, const char *preamble, py::array_t<PD_TYPE> &values, std::string colormap, double linewidth, double dotwidth, bool avoid_bounds, const char *closing ) {
     auto buf_positions = positions.request();
     auto buf_weights = weights.request();
     auto buf_values = values.request();
@@ -508,9 +508,10 @@ void display_asy( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
         b = inferno_color_map[ 3 * p + 2 ];
     };
 
+    std::ofstream f( filename );
+    f << preamble;
+
     if ( linewidth <= 0 && dotwidth ) {
-        std::ofstream f( filename );
-        f << preamble;
         if ( values.size() ) {
             double r, g, b;
             for( int n = 0; n < positions.shape( 0 ); ++n ) {
@@ -531,9 +532,9 @@ void display_asy( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
                             double r, g, b;
                             get_rgb( r, g, b, ptr_values[ num_dirac_0 ] );
                             os << "rgb(" << r << "," << g << "," << b << ")";
-                            cp.display_asy( outputs[ num_thread ], "", os.str(), true );
+                            cp.display_asy( outputs[ num_thread ], "", os.str(), true , avoid_bounds );
                         } else {
-                            cp.display_asy( outputs[ num_thread ], "", "", false );
+                            cp.display_asy( outputs[ num_thread ], "", ""      , false, avoid_bounds );
                         }
                     } );
                 },
@@ -546,11 +547,11 @@ void display_asy( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
             );
         } );
 
-        std::ofstream f( filename );
-        f << preamble;
         for( auto &os : outputs )
             f << os.str();
     }
+
+    f << closing;
 }
 
 struct PyDerResult {
