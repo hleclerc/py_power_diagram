@@ -27,8 +27,18 @@ class TestIntegrate( unittest.TestCase ):
 
         # wolfram: N[ Integrate[ Integrate[ Exp[  ( 1 - x*x - y*y ) / 1 ], { x, -0.5, 0.5 } ], { y, -0.5, 0.5 } ] ]
         res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.ones( 1 ), self.domain )
+        self.assertAlmostEqual( res[ 0 ], 2.31359, 5 )
+
+        # # wolfram: N[ Integrate[ Integrate[ Exp[  ( 1 - x*x - y*y ) / 1 ], { x, -0.5, 0.5 } ], { y, -0.5, 0.5 } ] ]
+        # res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.ones( 1 ), self.domain )
         # self.assertAlmostEqual( res[ 0 ], 2.31359, 5 )
         
+        # same thing with a different position
+        positions = np.array( [[ 0.0, 0.0 ]] )
+
+        # wolfram: N[ Integrate[ Integrate[ Exp[  ( 0 - x*x - y*y ) / 1 ], { x, 0, 1 } ], { y, 0, 1 } ] ]
+        res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.zeros( 1 ), self.domain )
+
         print( "integration:", res )
 
 if __name__ == '__main__':
