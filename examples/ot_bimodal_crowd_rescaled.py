@@ -71,7 +71,7 @@ for na in [ 20]: # , 40, 80, 160, 200
         # update positions
         descent_direction = np.zeros_like(positions)
         for n in range( positions.shape[ 0 ] ):
-            descent_direction[n,:] = g.grad( positions[ n, : ] )
+            descent_direction[n,:] = g.grad( positions[ n, : ], 4 * target_radius )
             
         positions += timestep*(descent_direction + (centroids-positions)/epsilon)
 

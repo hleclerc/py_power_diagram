@@ -41,7 +41,7 @@ class GradGrid:
         else:
             raise "TODO"
 
-    def grad( self, position ):
+    def grad( self, position, min_dist = 0 ):
         ib = np.floor( ( position - self.mi ) / self.ss ).astype( int )
         nd = self.mi.shape[ 0 ]
         if nd == 3:
@@ -50,8 +50,12 @@ class GradGrid:
             ix = ib[ 0 ] + dx
             iy = ib[ 1 ] + dy
             if ix >= 0 and iy >= 0 and ix < np.shape( self.dist.mask )[ 0 ] - 1 and iy < np.shape( self.dist.mask )[ 1 ] - 1 and self.dist.mask[ ix, iy ] == False and self.dist.mask[ ix + 1, iy ] == False and self.dist.mask[ ix, iy + 1 ] == False:
-                gx = self.dist[ ix + 1, iy ] - self.dist[ ix, iy ]
-                gy = self.dist[ ix, iy + 1 ] - self.dist[ ix, iy ]
+                cd = self.dist[ ix, iy ]
+                gx = self.dist[ ix + 1, iy ] - cd
+                gy = self.dist[ ix, iy + 1 ] - cd
                 re = np.array( [ gx, gy ] )
-                return re / np.linalg.norm( re )
+                no = np.linalg.norm( re )
+                if abs( cd ) < min_dist:
+                    return re / ( no + ( no == 0 ) ) * abs( cd ) / min_dist
+                return re / ( no + ( no == 0 ) )
         return np.array( [ 0, 1 ] )
