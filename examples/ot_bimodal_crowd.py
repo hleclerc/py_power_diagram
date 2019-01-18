@@ -4,12 +4,14 @@ import fast_marching as fm
 import numpy as np
 
 # constants
-for n in [ 60 ]:
+for na in [ 20, 40, 80, 160, 200 ]: # 
+    directory = "vtk_{}".format( na )
+
     # constants
-    target_radius = 3 * 0.45 / n
+    target_radius = 3 * 0.45 / na
 
     # positions
-    t = np.linspace( 0 + target_radius, 3 - target_radius, n )
+    t = np.linspace( 0 + target_radius, 3 - target_radius, na )
     x, y = np.meshgrid( t, t )
     positions = np.hstack( ( x.reshape( ( -1, 1 ) ), y.reshape( ( -1, 1 ) ) ) )
 
@@ -34,7 +36,7 @@ for n in [ 60 ]:
 
     h_weights = []
     h_positions = []
-    nb_timesteps = int( 20 / target_radius )
+    nb_timesteps = int( 22 / target_radius )
     for i in range( nb_timesteps ):
         # change positions
         for n in range( positions.shape[ 0 ] ):
@@ -44,10 +46,12 @@ for n in [ 60 ]:
         weights = pd.optimal_transport_2( "in_ball(weight**0.5)", positions, weights, domain )
 
         # display
-        pd.display_asy( "vtk/pd_{:03}.asy".format( i ), "in_ball(weight**0.5)", positions, weights, domain, values = color_values, linewidth = 0.005, dotwidth = target_radius * 0, closing = domain_asy, avoid_bounds = True )
-        pd.display_vtk( "vtk/pd_{:03}.vtk".format( i ), "in_ball(weight**0.5)", positions, weights, domain )
-        h_positions.append( positions )
-        h_weights.append( weights )
+        d = 2 * na
+        if i % d == 0:
+            pd.display_asy( directory + "/pd_{:03}.asy".format( int( i / d ) ), "in_ball(weight**0.5)", positions, weights, domain, values = color_values, linewidth = 0.005, dotwidth = target_radius * 0, closing = domain_asy, avoid_bounds = True )
+            pd.display_vtk( directory + "/pd_{:03}.vtk".format( int( i / d ) ), "in_ball(weight**0.5)", positions, weights, domain )
+            h_positions.append( positions )
+            h_weights.append( weights )
     
         # update positions
         positions = pd.get_centroids( "in_ball(weight**0.5)", positions, weights, domain )
@@ -59,4 +63,4 @@ for n in [ 60 ]:
     # output with timeout information
     timeout = ( timeout - np.min( timeout ) ) / np.ptp( timeout )
     for i in range( len( h_weights ) ):
-        pd.display_asy( "vtk/pd_{:03}.asy".format( i ), "in_ball(weight**0.5)", h_positions[ i ], h_weights[ i ], domain, values = timeout, linewidth = 0.005, dotwidth = target_radius * 0, closing = domain_asy, avoid_bounds = True )
+        pd.display_asy( directory + "/pd_timeout_{:03}.asy".format( i ), "in_ball(weight**0.5)", h_positions[ i ], h_weights[ i ], domain, values = timeout, linewidth = 0.005, dotwidth = target_radius * 0, closing = domain_asy, avoid_bounds = True )
