@@ -11,7 +11,7 @@ def in_box(Y, bbmin, bbmax):
                                          Y[:,1] >= bbmin[1]))
 
 # constants
-for na in [160,]: #[ 20, 40, 80, 160]:
+for na in [80,]: #[ 20, 40, 80, 160]:
     directory = "results/bimodal_crowd_{}".format( na )
 
     # constants
@@ -72,7 +72,7 @@ for na in [160,]: #[ 20, 40, 80, 160]:
         print("iteration %d/%d for na=%d" % (i, nb_timesteps,na))
 
         # optimal weights
-        weights = np.ones( positions.shape[ 0 ] ) * target_radius ** 2
+        # weights = np.ones( positions.shape[ 0 ] ) * target_radius ** 2
         weights = pd.optimal_transport_2( "in_ball(weight**0.5)", positions, weights, domain )
         centroids = pd.get_centroids( "in_ball(weight**0.5)", positions, weights, domain )
 

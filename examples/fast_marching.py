@@ -2,7 +2,7 @@ import numpy as np
 import skfmm
 import math
 
-import matplotlib.pyplot
+# import matplotlib.pyplot
 
 class GradGrid:
     def __init__( self, domain, targets, space_step ):
@@ -31,8 +31,8 @@ class GradGrid:
 
         self.dist = skfmm.distance( np.ma.MaskedArray( phi, mask ), dx = [ space_step for d in range( nd ) ] )
 
-        matplotlib.pyplot.contour( self.dist )
-        matplotlib.pyplot.show()
+        # matplotlib.pyplot.contour( self.dist, levels = 70 )
+        # matplotlib.pyplot.show()
 
         # precomputation of an integer spiral (used in grad func)
         self._offsets = []
