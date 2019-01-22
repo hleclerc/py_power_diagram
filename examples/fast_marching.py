@@ -31,11 +31,14 @@ class GradGrid:
 
         self.dist = skfmm.distance( np.ma.MaskedArray( phi, mask ), dx = [ space_step for d in range( nd ) ] )
 
+        matplotlib.pyplot.contour( self.dist )
+        matplotlib.pyplot.show()
+
         # precomputation of an integer spiral (used in grad func)
         self._offsets = []
         if nd == 2:
-            for y in range( -5, 6 ):
-                for x in range( -5, 6 ):
+            for y in range( -75, 76 ):
+                for x in range( -75, 76 ):
                     self._offsets.append( ( x, y ) )
             self._offsets.sort( key = lambda p: p[ 0 ]**2 + p[ 1 ]**2 )
         else:
