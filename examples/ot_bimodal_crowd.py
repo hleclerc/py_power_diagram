@@ -5,7 +5,7 @@ import numpy as np
 
 # constants
 for na in [ 20, 40, 80, 160, 200 ]: # 
-    directory = "vtk_{}".format( na )
+    directory = "results/bimodal_crowd_{}".format( na )
 
     # constants
     target_radius = 3 * 0.45 / na
@@ -20,7 +20,7 @@ for na in [ 20, 40, 80, 160, 200 ]: #
     domain.add_box( [ 0, 0 ], [ 3, 3 ], 1 / ( np.pi * target_radius ** 2 ) )
     domain.add_box( [ 3, 1 ], [ 4, 2 ], 1 / ( np.pi * target_radius ** 2 ) )
     domain.add_box( [ 4, 0 ], [ 7, 3 ], 1 / ( np.pi * target_radius ** 2 ) )
-    domain.display_boundaries_vtk( "vtk/bounds.vtk" )
+    domain.display_boundaries_vtk( directory + "/bound.vtk" )
 
     domain_asy = "draw((0,0)--(3,0)--(3,1)--(4,1)--(4,0)--(7,0)--(7,3)--(4,3)--(4,2)--(3,2)--(3,3)--(0,3)--cycle);\n"
 

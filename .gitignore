@@ -13,3 +13,8 @@ build/
 *.pyc
 ext/
 *.pdf
+results/
+*.npy
+*.vtk
+*.csv
+*swp

@@ -23,7 +23,9 @@ def _domain_for( positions, weights, domain, m ):
 
 # make a vtk file for a representation of the power diagram
 def display_vtk( filename, func, positions, weights, domain = None, grid = None ):
-    os.makedirs( os.path.dirname( filename ), exist_ok = True )
+    dn = os.path.dirname( filename )
+    if len( dn ):
+        os.makedirs( dn, exist_ok = True )
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
@@ -31,7 +33,9 @@ def display_vtk( filename, func, positions, weights, domain = None, grid = None 
 
 # make a metapost file for a representation of the power diagram
 def display_asy( filename, func, positions, weights, domain = None, grid = None, preamble = "", closing = "", output_format = "pdf", linewidth = 0.02, dotwidth = 0.0, values = np.array([]), colormap = "inferno", avoid_bounds = False ):
-    os.makedirs( os.path.dirname( filename ), exist_ok = True )
+    dn = os.path.dirname( filename )
+    if len( dn ):
+        os.makedirs( dn, exist_ok = True )
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )

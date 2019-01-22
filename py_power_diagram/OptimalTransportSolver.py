@@ -57,7 +57,6 @@ class OptimalTransportSolver:
                 A.assemblyBegin() # Make matrices useable.
                 A.assemblyEnd()
 
-
                 # Initialize ksp solver.
                 ksp = PETSc.KSP().create()
                 ksp.setType( 'cg' )

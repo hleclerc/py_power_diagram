@@ -11,8 +11,8 @@ def in_box(Y, bbmin, bbmax):
                                          Y[:,1] >= bbmin[1]))
 
 # constants
-for na in [80,]: #[ 20, 40, 80, 160]:
-    directory = "vtk_{}".format( na )
+for na in [160,]: #[ 20, 40, 80, 160]:
+    directory = "results/bimodal_crowd_{}".format( na )
 
     # constants
     alpha = 2*np.sqrt(1/np.pi)
@@ -51,8 +51,8 @@ for na in [80,]: #[ 20, 40, 80, 160]:
                   (0, 0, alpha, 0, alpha, alpha/3,
                    4*alpha/3, alpha/3, 4*alpha/3, 0, 7*alpha/3, 0, 7*alpha/3, alpha,
                    4*alpha/3, alpha, 4*alpha/3, 2*alpha/3, alpha, 2*alpha/3, alpha, alpha, 0, alpha))
-    s = 0.02
-    g = fm.GradGrid( domain, [ [ 7*alpha/3-s, alpha-s ], [ 7*alpha/3-s, 0+s ] ], s )
+    s = target_radius
+    g = fm.GradGrid( domain, [ [ 7*alpha/3-4*s, alpha-4*s ], [ 7*alpha/3-4*s, 0+4*s ] ], s )
 
     # iterations
     weights = np.ones( positions.shape[ 0 ] ) * target_radius ** 2
@@ -70,16 +70,17 @@ for na in [80,]: #[ 20, 40, 80, 160]:
     
     for i in range( nb_timesteps ):
         print("iteration %d/%d for na=%d" % (i, nb_timesteps,na))
+
         # optimal weights
         weights = np.ones( positions.shape[ 0 ] ) * target_radius ** 2
         weights = pd.optimal_transport_2( "in_ball(weight**0.5)", positions, weights, domain )
         centroids = pd.get_centroids( "in_ball(weight**0.5)", positions, weights, domain )
-        
+
         # display
         if i in display_timesteps:
             print(i)
             j = display_timesteps.tolist().index(i)
-            pd.display_asy( directory + "/pd_{:03}.asy".format( j ), "in_ball(weight**0.5)", positions, weights, domain, values = color_values, linewidth = 0.005, dotwidth = target_radius * 0, closing = domain_asy, avoid_bounds = True )
+            pd.display_asy( directory + "/pd_{:03}.asy".format( j ), "in_ball(weight**0.5)", positions, weights, domain, values = color_values, linewidth = 0.0005, dotwidth = target_radius * 0, closing = domain_asy, avoid_bounds = True )
             pd.display_vtk( directory + "/pd_{:03}.vtk".format( j ), "in_ball(weight**0.5)", positions, weights, domain )
             h_positions.append( positions )
             h_weights.append( weights )
