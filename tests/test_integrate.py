@@ -19,28 +19,24 @@ class TestIntegrate( unittest.TestCase ):
             self.assertAlmostEqual( np.sum( areas ), 1.0 )
 
     def test_gaussian( self ):
-        positions = np.array( [[ 0.5, 0.5 ]] )
-
         # wolfram: N[ Integrate[ Integrate[ Exp[  ( 0 - x*x - y*y ) / 1 ], { x, -0.5, 0.5 } ], { y, -0.5, 0.5 } ] ]
-        res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.zeros( 1 ), self.domain )
-        self.assertAlmostEqual( res[ 0 ], 0.851121, 5 )
 
-        # wolfram: N[ Integrate[ Integrate[ Exp[  ( 1 - x*x - y*y ) / 1 ], { x, -0.5, 0.5 } ], { y, -0.5, 0.5 } ] ]
-        res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.ones( 1 ), self.domain )
-        self.assertAlmostEqual( res[ 0 ], 2.31359, 5 )
+        self._test_gaussian_for( [ 0.5, 0.5 ], w=0, eps=1.0, expected=0.851121  )
+        self._test_gaussian_for( [ 0.5, 0.5 ], w=1, eps=1.0, expected=2.31359   )
+        self._test_gaussian_for( [ 0.5, 0.5 ], w=0, eps=2.0, expected=0.921313  )
+        self._test_gaussian_for( [ 0.5, 0.5 ], w=1, eps=2.0, expected=1.51899   )
 
-        # # wolfram: N[ Integrate[ Integrate[ Exp[  ( 1 - x*x - y*y ) / 1 ], { x, -0.5, 0.5 } ], { y, -0.5, 0.5 } ] ]
-        # res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.ones( 1 ), self.domain )
-        # self.assertAlmostEqual( res[ 0 ], 2.31359, 5 )
-        
-        # same thing with a different position
-        positions = np.array( [[ 0.0, 0.0 ]] )
+        self._test_gaussian_for( [ 0.0, 0.0 ], w=0, eps=1.0, expected=0.557746  )
+        self._test_gaussian_for( [ 0.0, 0.0 ], w=1, eps=1.0, expected=1.51611   )
+        self._test_gaussian_for( [ 0.0, 0.0 ], w=0, eps=2.0, expected=0.732093  )
+        self._test_gaussian_for( [ 0.0, 0.0 ], w=1, eps=2.0, expected=1.20702   )
 
-        # wolfram: N[ Integrate[ Integrate[ Exp[  ( 0 - x*x - y*y ) / 1 ], { x, 0, 1 } ], { y, 0, 1 } ] ]
-        res = pd.get_integrals( "exp((w-r**2)/1)", positions, np.zeros( 1 ), self.domain )
-        self.assertAlmostEqual( res[ 0 ], 0.557746, 5 )
+        self._test_gaussian_for( [ 0.0, 0.0 ], w=0, eps=0.1, expected=0.0785386 )
 
-        print( "integration:", res )
+    def _test_gaussian_for( self, positions, w, eps, expected ):
+        res = pd.get_integrals( "exp((w-r**2)/{})".format( eps ), np.array( [ positions ] ), np.zeros( 1 ) + w, self.domain )
+        self.assertAlmostEqual( res[ 0 ], expected, 5 )
+
 
 if __name__ == '__main__':
     unittest.main()

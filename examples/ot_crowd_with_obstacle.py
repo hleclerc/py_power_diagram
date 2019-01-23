@@ -4,7 +4,7 @@ import fast_marching as fm
 import numpy as np
 
 times = []
-for obstacle_radius in [ 0.05, 0.10, 0.15, 0.20, 0.25, 0.35 ]:
+for obstacle_radius in [ 0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.35 ]:
     for na in [ 50 ]: # 
         directory = "results/crowd_with_obstacle_{}_w{}".format( na, int( 100 * obstacle_radius ) )
 
@@ -31,7 +31,8 @@ for obstacle_radius in [ 0.05, 0.10, 0.15, 0.20, 0.25, 0.35 ]:
         domain = pd.domain_types.ConvexPolyhedraAssembly()
         domain.add_box( [ 0, 0 ], [ 2, 1 ], im )
         domain.add_box( [ pos_door, 0.5 - opened_width / 2 ], [ limx, 0.5 + opened_width / 2 ], im )
-        domain.add_convex_polyhedron( np.array( pon ), - im )
+        if obstacle_radius:
+            domain.add_convex_polyhedron( np.array( pon ), - im )
         domain.display_boundaries_vtk( directory + "/bound.vtk" )
 
         # domain_asy = "draw((0,0)--(3,0)--(3,1)--(4,1)--(4,0)--(7,0)--(7,3)--(4,3)--(4,2)--(3,2)--(3,3)--(0,3)--cycle);\n"
@@ -49,7 +50,8 @@ for obstacle_radius in [ 0.05, 0.10, 0.15, 0.20, 0.25, 0.35 ]:
         for i in range( nb_timesteps ):
             # change positions
             for n in range( positions.shape[ 0 ] ):
-                positions[ n, : ] += 0.5 * target_radius * g.grad( positions[ n, : ] )
+                c = 1 / ( 10 * weights[ n ] / 7e-4 + 1 )
+                positions[ n, : ] += c * 0.5 * target_radius * g.grad( positions[ n, : ] )
 
             # optimal weights
             weights = pd.optimal_transport_2( "in_ball(weight**0.5)", positions, weights, domain )
