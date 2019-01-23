@@ -492,7 +492,7 @@ void display_vtk( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
     vtk_output.save( filename );
 }
 
-void display_asy( const char *filename, py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &radial_func, const char *preamble, py::array_t<PD_TYPE> &values, std::string colormap, double linewidth, double dotwidth, bool avoid_bounds, const char *closing ) {
+void display_asy( const char *filename, py::array_t<PD_TYPE> &positions, py::array_t<PD_TYPE> &weights, PyConvexPolyhedraAssembly &domain, PyZGrid &py_grid, const std::string &radial_func, const char *preamble, py::array_t<PD_TYPE> &values, std::string colormap, double linewidth, double dotwidth, bool avoid_bounds, const char *closing, double min_rf, double max_rf ) {
     auto buf_positions = positions.request();
     auto buf_weights = weights.request();
     auto buf_values = values.request();
@@ -528,13 +528,32 @@ void display_asy( const char *filename, py::array_t<PD_TYPE> &positions, py::arr
             py_grid.grid.for_each_laguerre_cell( [&]( auto &lc, std::size_t num_dirac_0, int num_thread ) {
                     domain.bounds.for_each_intersection( lc, [&]( auto &cp, auto space_func ) {
                         if ( values.size() ) {
-                            std::ostringstream os;
-                            double r, g, b;
-                            get_rgb( r, g, b, ptr_values[ num_dirac_0 ] );
-                            os << "rgb(" << r << "," << g << "," << b << ")";
-                            cp.display_asy( outputs[ num_thread ], "", os.str(), true , avoid_bounds );
+                            if ( min_rf < max_rf ) {
+                                ft.span_for_viz( [&]( double r0, double r1, double val ) {
+                                    auto ncp = cp;
+                                    for( std::size_t na = 0, tn = 20; na < tn; ++na ) {
+                                        double a = 2 * M_PI * na / tn;
+                                        Point2<PD_TYPE> d{ cos( a ), sin( a ) };
+                                        ncp.plane_cut( cp.sphere_center + r1 * d, d, 0 );
+                                    }
+                                    double r, g, b;
+                                    std::ostringstream os;
+                                    get_rgb( r, g, b, ( val - min_rf ) / ( max_rf - min_rf ) );
+                                    os << "rgb(" << r << "," << g << "," << b << ")";
+                                    ncp.display_asy( outputs[ num_thread ], "", os.str(), true, avoid_bounds, false );
+                                }, ptr_weights[ num_dirac_0 ] );
+
+                                // boundaries
+                                cp.display_asy( outputs[ num_thread ] );
+                            } else {
+                                double r, g, b;
+                                std::ostringstream os;
+                                get_rgb( r, g, b, ptr_values[ num_dirac_0 ] );
+                                os << "rgb(" << r << "," << g << "," << b << ")";
+                                cp.display_asy( outputs[ num_thread ], "", os.str(), true, avoid_bounds );
+                            }
                         } else {
-                            cp.display_asy( outputs[ num_thread ], "", ""      , false, avoid_bounds );
+                            cp.display_asy( outputs[ num_thread ], "", "", false, avoid_bounds );
                         }
                     } );
                 },

@@ -3,49 +3,49 @@ import py_power_diagram as pd
 import numpy as np
 
 # constants
-for n in [ 5 ]:
+for n in [ 20 ]:
+    directory = "results/diffusion_{}".format( n )
+
     # constants
     eps = n ** -0.5
     rfu = "exp((w-r**2)/{:.16f})".format( eps )
 
     # domain
     domain = pd.domain_types.ConvexPolyhedraAssembly()
-    domain.add_box( [ -1, -1 ], [ 2, 2 ] )
-    domain.normalize()
+    domain.add_convex_polyhedron( [
+         [ -1, -1, -1,  0 ],
+         [ -1, -1,  0, -1 ],
+         [ +2, -1,  1, -1 ],
+         [ -1, +2,  0, +1 ]
+    ] ) # target mass => 1/N
 
-    domain.display_boundaries_vtk( "vtk/bounds.vtk" )
+    domain.display_boundaries_vtk( directory + "/bounds.vtk" )
 
     # 
     positions = []
     for y in np.linspace( 0, 1, n ):
         for x in np.linspace( 0, 1, n ):
             positions.append( [ x, y ] )
+    positions = np.array( positions )
 
     # iterations
-    positions = np.array( positions )
+    max_w = -1
+    min_w = 0
     weights = np.zeros( positions.shape[ 0 ] )
+    for i in range( 101 ):
+        # optimal weights
+        weights = pd.optimal_transport_2( rfu, positions, weights, domain )
 
-    color_values = positions[ :, 1 ]
-    color_values = ( color_values - np.min( color_values ) ) / ( np.max( color_values ) - np.min( color_values ) )
+        min_w = np.min( weights )
+        max_w = np.max( weights )
 
-    #
-    print( positions )
-
-    integration = pd.get_centroids( rfu, positions, weights, domain )
-    # positions = pd.get_centroids( rfu, positions, weights, domain )
-    print( positions )
-
-    # for i in range( 1 ):
-    #     # change positions
-    #     # positions -= 0.4 * target_radius / np.linalg.norm( positions, axis=1, keepdims=True, ord=2 ) * positions
-
-    #     # optimal weights
-    #     weights = pd.optimal_transport_2( rfu, positions, weights, domain )
-
-    #     # display
-    #     # pd.display_asy( "vtk/pd_{:03}.asy".format( i ), rfu, positions, weights, domain, values = color_values )
-    #     pd.display_vtk( "vtk/pd_{:03}.vtk".format( i ), rfu, positions, weights, domain )
+        # display
+        if i % 10 == 0:
+            pd.display_asy( directory + "/we_{:03}.asy".format( int( i / 10 ) ), rfu, positions, weights, domain, values = ( weights - min_w ) / ( max_w - min_w ), linewidth=0.002 )
+            pd.display_asy( directory + "/pd_{:03}.asy".format( int( i / 10 ) ), rfu, positions, weights, domain, values = ( weights - min_w ) / ( max_w - min_w ), linewidth=0.002, min_rf=0, max_rf=0.35 )
+        pd.display_vtk( directory + "/pd_{:03}.vtk".format( i ), rfu, positions, weights, domain )
     
-    #     # update positions
-    #     positions = pd.get_centroids( rfu, positions, weights, domain )
+        # update positions
+        d = 0.75
+        positions = d * pd.get_centroids( rfu, positions, weights, domain ) + ( 1 - d ) * positions
 

@@ -48,7 +48,7 @@ class OptimalTransportSolver:
             old_weights = new_weights + 0.0
 
             #
-            if self.radial_func == '1':
+            if self.radial_func != 'in_ball(weight**0.5)':
                 mvs.m_values[ 0 ] *= 2
 
             with TimeMeasurement( self.time_solve ):
