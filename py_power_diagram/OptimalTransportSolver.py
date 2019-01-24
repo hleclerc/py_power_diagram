@@ -41,7 +41,7 @@ class OptimalTransportSolver:
 
             # 
             if mvs.error:
-                ratio = 0.1
+                ratio = 0.5
                 new_weights = ( 1 - ratio ) * old_weights + ratio * new_weights
                 print( "bim (going back)" )
                 continue
