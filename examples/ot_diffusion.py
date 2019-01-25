@@ -6,8 +6,17 @@ import numpy as np
 for n in [ 10 ]:
     directory = "results/diffusion_{}".format( n )
 
+    # 
+    positions = []
+    for y in np.linspace( 0, 1, n ):
+        for x in np.linspace( 0, 1, n ):
+            positions.append( [ x, y ] )
+    positions = np.array( positions )
+
+
     # constants
-    eps = n ** -0.5
+    N = positions.shape[ 0 ]
+    eps = 1.0 / n
     rfu = "exp((w-r**2)/{:.16f})".format( eps )
 
     # domain
@@ -21,20 +30,13 @@ for n in [ 10 ]:
 
     domain.display_boundaries_vtk( directory + "/bounds.vtk" )
 
-    # 
-    positions = []
-    for y in np.linspace( 0, 1, n ):
-        for x in np.linspace( 0, 1, n ):
-            positions.append( [ x, y ] )
-    positions = np.array( positions )
-
     # iterations
     max_w = -1
     min_w = 0
     weights = np.zeros( positions.shape[ 0 ] )
-    for i in range( 101 ):
+    for i in range( 11 ):
         # optimal weights
-        weights = pd.optimal_transport_2( rfu, positions, weights, domain )
+        weights = pd.optimal_transport_2( rfu, positions, weights, np.ones( N ) / N, domain )
 
         min_w = np.min( weights )
         max_w = np.max( weights )

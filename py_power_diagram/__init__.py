@@ -75,12 +75,12 @@ def get_der_integrals_wrt_weights( func, positions, weights, domain = None, grid
 
 # return optimal weights
 # possible func types: "1", ...
-def optimal_transport_2( func, positions, weights, domain = None, grid = None ):
+def optimal_transport_2( func, positions, weights, mass, domain = None, grid = None ):
     m = cpp.py_power_diagram_cpp_module.module_for_paw( positions, weights )
     d = _domain_for( positions, weights, domain, m )
     g = _grid_for( positions, weights, grid, m )
 
     s = OptimalTransportSolver( m, d, g, func.lower() )
-    return s.solve( positions, weights )
+    return s.solve( positions, weights, mass )
 
 

@@ -50,8 +50,7 @@ class OptimalTransportSolver:
             #
             if self.radial_func != 'in_ball(weight**0.5)':
                 mvs.m_values[ 0 ] *= 2
-
-            mvs.m_values -= mass
+            mvs.v_values -= mass
 
             with TimeMeasurement( self.time_solve ):
                 A = PETSc.Mat().createAIJ( [ weights.shape[ 0 ], weights.shape[ 0 ] ], csr = ( mvs.m_offsets.astype( PETSc.IntType ), mvs.m_columns.astype( PETSc.IntType ), mvs.m_values ) )
@@ -73,10 +72,11 @@ class OptimalTransportSolver:
                 ksp.solve( b, x )
 
             nx = np.max( np.abs( x ) )
-            new_weights -= x
-            print( "max dw:", nx )
+            new_weights -= 1.35 * x
+            # print( "max dw:", nx )
 
             if nx < self.obj_max_dw:
+                print( "num_iter", num_iter )
                 break
 
         # print( 'time solve:', self.time_solve )

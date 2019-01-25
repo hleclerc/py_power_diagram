@@ -42,6 +42,14 @@ class TestIntegrate( unittest.TestCase ):
 
         self._test_gaussian_for( [ 0.0, 0.0 ], w=0, eps=0.1, exp_int=0.0785386, exp_ctr=[ 0.178406, 0.178406 ] )
 
+        # wolfram: N[ Integrate[ Integrate[ Exp[ ( 0 - x*x - y*y ) / 0.1 ], { x, -0.2, 0.8 } ], { y, 0, 1 } ] ]
+        # wolfram: N[ Integrate[ Integrate[ x * Exp[ ( 0 - x*x - y*y ) / 0.1 ], { x, -0.2, 0.8 } ], { y, 0, 1 } ] ] / N[ Integrate[ Integrate[ Exp[ ( 0 - x*x - y*y ) / 0.1 ], { x, -0.2, 0.8 } ], { y, 0, 1 } ] ]
+        self._test_gaussian_for( [ 0.2, 0.0 ], w=0, eps=0.1, exp_int=0.127906 , exp_ctr=[ 0.273253, 0.178406 ] )
+        
+        # wolfram: N[ Integrate[ Integrate[ Exp[ ( 0 - x*x - y*y ) / 0.1 ], { x, -0.4, 0.6 } ], { y, 0, 1 } ] ]
+        # wolfram: N[ Integrate[ Integrate[ x * Exp[ ( 0 - x*x - y*y ) / 0.1 ], { x, -0.4, 0.6 } ], { y, 0, 1 } ] ] / N[ Integrate[ Integrate[ Exp[ ( 0 - x*x - y*y ) / 0.1 ], { x, -0.4, 0.6 } ], { y, 0, 1 } ] ]
+        self._test_gaussian_for( [ 0.4, 0.0 ], w=0, eps=0.1, exp_int=0.150722 , exp_ctr=[ 0.4162297, 0.178406 ] )
+
     def _test_gaussian_for( self, positions, w, eps, exp_int, exp_ctr ):
         res = pd.get_integrals( "exp((w-r**2)/{})".format( eps ), np.array( [ positions ] ), np.zeros( 1 ) + w, self.domain )
         self.assertAlmostEqual( res[ 0 ], exp_int, 5 )
@@ -54,8 +62,3 @@ class TestIntegrate( unittest.TestCase ):
 if __name__ == '__main__':
     unittest.main()
 
-# der measures
-# ( has_a_void_cell, m_offsets, m_columns, m_values, v_values ) = pd.get_der_integrations_wrt_weights( positions, weights, domain )
-# # display
-# pd.display_vtk( "vtk/pd.vtk", positions, weights, domain )
-# domain.display_boundaries_vtk( "vtk/domain.vtk" )
