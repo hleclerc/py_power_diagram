@@ -72,7 +72,7 @@ class OptimalTransportSolver:
                 ksp.solve( b, x )
 
             nx = np.max( np.abs( x ) )
-            new_weights -= 1.35 * x
+            new_weights -= x
             # print( "max dw:", nx )
 
             if nx < self.obj_max_dw:
