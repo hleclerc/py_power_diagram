@@ -3,7 +3,7 @@ import py_power_diagram as pd
 import numpy as np
 
 # constants
-for n in [ 20 ]:
+for n in [ 10 ]:
     directory = "results/diffusion_{}".format( n )
 
     # constants

@@ -25,7 +25,7 @@ class OptimalTransportSolver:
         self.time_der   = []
         self.delta_w    = []
 
-    def solve( self, positions, weights ):
+    def solve( self, positions, weights, mass ):
         x = PETSc.Vec().createSeq( weights.shape[ 0 ] )
 
         new_weights = weights + 0.0
@@ -50,6 +50,8 @@ class OptimalTransportSolver:
             #
             if self.radial_func != 'in_ball(weight**0.5)':
                 mvs.m_values[ 0 ] *= 2
+
+            mvs.m_values -= mass
 
             with TimeMeasurement( self.time_solve ):
                 A = PETSc.Mat().createAIJ( [ weights.shape[ 0 ], weights.shape[ 0 ] ], csr = ( mvs.m_offsets.astype( PETSc.IntType ), mvs.m_columns.astype( PETSc.IntType ), mvs.m_values ) )
